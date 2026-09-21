@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倪海厦天纪·紫微斗数智能排盘系统</title>
+    <!-- 引入权威的 lunar.js 农历历法库 -->
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: "Kaiti SC", "楷体", "STKaiti", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: #f4efe6;
+            color: #2c2c2c;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            margin-bottom: 8px;
+            color: #8b0000;
+            font-size: 26px;
+            letter-spacing: 2px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1300px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        /* 左侧对话与输入面板 */
+        .panel {
+            width: 380px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #dcd6cd;
+            display: flex;
+            flex-direction: column;
+            height: 800px;
+        }
+        .panel-header {
+            background-color: #8b0000;
+            color: white;
+            padding: 14px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border-top-left-radius: 9px;
+            border-top-right-radius: 9px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-history {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #faf7f2;
+        }
+        .chat-bubble {
+            max-width: 88%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            word-break: break-all;
+        }
+        .bubble-bot {
+            background-color: #fff;
+            border: 1px solid #e2dad0;
+            align-self: flex-start;
+            color: #333;
+        }
+        .bubble-user {
+            background-color: #8b0000;
+            color: #fff;
+            align-self: flex-end;
+        }
+        .input-area {
+            padding: 15px;
+            background: #fff;
+            border-top: 1px solid #e8e2d8;
+            border-bottom-left-radius: 9px;
+            border-bottom-right-radius: 9px;
+        }
+        .mode-toggle {
+            display: flex;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #8b0000;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 6px;
+            text-align: center;
+            font-size: 13px;
+            cursor: pointer;
+            background: #fff;
+            color: #8b0000;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background: #8b0000;
+            color: #fff;
+            font-weight: bold;
+        }
+        .chat-input-box {
+            display: flex;
+            gap: 8px;
+        }
+        .chat-input-box input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+        .chat-input-box button {
+            background-color: #8b0000;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .chat-input-box button:hover {
+            background-color: #a00000;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+        .form-group select, .form-group input {
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .quick-examples {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #888;
+        }
+        .quick-btn {
+            display: inline-block;
+            background: #eae2d6;
+            color: #555;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 4px;
+            margin-top: 4px;
+            cursor: pointer;
+        }
+        .quick-btn:hover {
+            background: #8b0000;
+            color: #fff;
+        }
+
+        /* 右侧十二宫盘面 */
+        .board {
+            width: 800px;
+            height: 800px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 2px;
+            background-color: #8b0000;
+            border: 2px solid #8b0000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .cell {
+            background-color: #fdfbf7;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .center-cell {
+            grid-column: 2 / 4;
+            grid-row: 2 / 4;
+            background-color: #f7f1e5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        .center-cell h2 {
+            color: #8b0000;
+            margin-bottom: 10px;
+            font-size: 20px;
+            border-bottom: 2px solid #8b0000;
+            padding-bottom: 4px;
+        }
+        .dizhi {
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            font-size: 14px;
+            color: #888;
+            font-weight: bold;
+        }
+        .gongwei {
+            position: absolute;
+            bottom: 4px;
+            left: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #8b0000;
+        }
+        .stars {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .star-item {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .purple-group { color: #800080; } /* 紫微星系 */
+        .tianfu-group { color: #006600; } /* 天府星系 */
+
+        .info-card {
+            background: #fff;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid #e2dad0;
+            text-align: left;
+            width: 100%;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        .info-card strong {
+            color: #8b0000;
+        }
+        .highlight {
+            color: #b22222;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>倪海厦天纪·紫微斗数排盘系统</h1>
+    <div class="subtitle">【精准历法库支持】输入阳历或农历生辰，自动校验节气与干支排盘</div>
+
+    <div class="container">
+        <!-- 左侧智能对话框 -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>💬 生辰助手</span>
+                <span id="lib-status" style="font-size: 11px; background: #2e7d32; padding: 2px 6px; border-radius: 4px;">历法库已就绪</span>
+            </div>
+            
+            <div class="chat-history" id="chatHistory">
+                <div class="chat-bubble bubble-bot">
+                    您好！我是紫微排盘助手。<br>
+                    你可以直接在下方输入对话，例如：<br>
+                    • <b>“公历 1990年5月18日 早上8点”</b><br>
+                    • <b>“农历 1984年四月十五 辰时”</b><br>
+                    或者切换到【精确选单】模式直接选择。
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="mode-toggle">
+                    <div class="mode-btn active" id="btnModeText" onclick="switchMode('text')">🗣️ 对话输入</div>
+                    <div class="mode-btn" id="btnModeForm" onclick="switchMode('form')">📅 表单选择</div>
+                </div>
+
+                <!-- 文本对话框模式 -->
+                <div id="textModeGroup">
+                    <div class="chat-input-box">
+                        <input type="text" id="userInput" placeholder="例如: 阳历1995年8月12日 14点" onkeypress="handleKeyPress(event)">
+                        <button onclick="processTextInput()">排盘</button>
+                    </div>
+                    <div class="quick-examples">
+                        快捷测试：
+                        <span class="quick-btn" onclick="fillQuick('阳历1990年5月18日 08:30')">90年阳历</span>
+                        <span class="quick-btn" onclick="fillQuick('阴历1984年四月十五 辰时')">84年阴历</span>
+                        <span class="quick-btn" onclick="fillQuick('1998-10-05 15:20')">98标准格式</span>
+                    </div>
+                </div>
+
+                <!-- 精确表单选择模式 -->
+                <div id="formModeGroup" style="display: none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>历法类型</label>
+                            <select id="calendarType" onchange="toggleMonthDays()">
+                                <option value="solar">公历 (阳历)</option>
+                                <option value="lunar">农历 (阴历)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>出生年份</label>
+                            <select id="selYear"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>月份</label>
+                            <select id="selMonth"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>日期</label>
+                            <select id="selDay"></select>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>出生时辰</label>
+                            <select id="selShichen">
+                                <option value="0">子时 (23:00-00:59)</option>
+                                <option value="1">丑时 (01:00-02:59)</option>
+                                <option value="2">寅时 (03:00-04:59)</option>
+                                <option value="3">卯时 (05:00-06:59)</option>
+                                <option value="4">辰时 (07:00-08:59)</option>
+                                <option value="5">巳时 (09:00-10:59)</option>
+                                <option value="6">午时 (11:00-12:59)</option>
+                                <option value="7">未时 (13:00-14:59)</option>
+                                <option value="8">申时 (15:00-16:59)</option>
+                                <option value="9">酉时 (17:00-18:59)</option>
+                                <option value="10">戌时 (19:00-20:59)</option>
+                                <option value="11">亥时 (21:00-22:59)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button style="width: 100%; padding: 8px; background: #8b0000; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="processFormInput()">确 认 排 盘</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧十二宫棋盘 -->
+        <div class="board" id="board">
+            <div class="cell" id="cell-巳"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">巳</div></div>
+            <div class="cell" id="cell-午"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">午</div></div>
+            <div class="cell" id="cell-未"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">未</div></div>
+            <div class="cell" id="cell-申"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">申</div></div>
+            
+            <div class="cell" id="cell-辰"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">辰</div></div>
+            
+            <!-- 中间中堂 -->
+            <div class="center-cell">
+                <h2>天纪·紫微斗数命盘</h2>
+                <div class="info-card" id="center-info">
+                    请在左侧对话框输入您的出生时间，或选择精确生辰。<br><br>
+                    • 系统将自动完成阳阴历转换<br>
+                    • 自动对齐干支纪年与纳音五行<br>
+                    • 精确排定紫微天府十四主星
+                </div>
+            </div>
+            
+            <div class="cell" id="cell-酉"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">酉</div></div>
+
+            <div class="cell" id="cell-卯"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">卯</div></div>
+            <div class="cell" id="cell-戌"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">戌</div></div>
+
+            <div class="cell" id="cell-寅"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">寅</div></div>
+            <div class="cell" id="cell-丑"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">丑</div></div>
+            <div class="cell" id="cell-子"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">子</div></div>
+            <div class="cell" id="cell-亥"><div class="stars"></div><div class="gongwei"></div><div class="dizhi">亥</div></div>
+        </div>
+    </div>
+
+    <script>
+        // 1. 基础数组与常量定义
+        const DIZHI = ["寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"];
+        const TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+        const GONGWEI_NAMES = [
+            "命宫", "兄弟宫", "夫妻宫", "子女宫", 
+            "财帛宫", "疾厄宫", "迁移宫", "仆役宫", 
+            "官禄宫", "田宅宫", "福德宫", "父母宫"
+        ];
+        const JU_NAMES = { 2: "水二局", 3: "木三局", 4: "金四局", 5: "土五局", 6: "火六局" };
+
+        // 页面初始化
+        window.onload = function() {
+            initFormOptions();
+            if (typeof Lunar === 'undefined') {
+                document.getElementById('lib-status').innerText = "离线备用模式";
+                document.getElementById('lib-status').style.backgroundColor = "#e65100";
+            }
+        };
+
+        function switchMode(mode) {
+            if (mode === 'text') {
+                document.getElementById('btnModeText').classList.add('active');
+                document.getElementById('btnModeForm').classList.remove('active');
+                document.getElementById('textModeGroup').style.display = 'block';
+                document.getElementById('formModeGroup').style.display = 'none';
+            } else {
+                document.getElementById('btnModeForm').classList.add('active');
+                document.getElementById('btnModeText').classList.remove('active');
+                document.getElementById('textModeGroup').style.display = 'none';
+                document.getElementById('formModeGroup').style.display = 'block';
+            }
+        }
+
+        function initFormOptions() {
+            const selYear = document.getElementById('selYear');
+            for (let y = 1930; y <= 2030; y++) {
+                let opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = y + "年";
+                if (y === 1990) opt.selected = true;
+                selYear.appendChild(opt);
+            }
+
+            const selMonth = document.getElementById('selMonth');
+            for (let m = 1; m <= 12; m++) {
+                let opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = m + "月";
+                if (m === 5) opt.selected = true;
+                selMonth.appendChild(opt);
+            }
+
+            const selDay = document.getElementById('selDay');
+            for (let d = 1; d <= 31; d++) {
+                let opt = document.createElement('option');
+                opt.value = d;
+                opt.innerText = d + "日";
+                if (d === 18) opt.selected = true;
+                selDay.appendChild(opt);
+            }
+        }
+
+        function fillQuick(str) {
+            document.getElementById('userInput').value = str;
+            processTextInput();
+        }
+
+        function handleKeyPress(e) {
+            if (e.keyCode === 13) processTextInput();
+        }
+
+        function addChatBubble(text, isUser) {
+            const chatHistory = document.getElementById('chatHistory');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${isUser ? 'bubble-user' : 'bubble-bot'}`;
+            bubble.innerHTML = text;
+            chatHistory.appendChild(bubble);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // 智能解析文本对话
+        function processTextInput() {
+            const input = document.getElementById('userInput').value.trim();
+            if (!input) return;
+
+            addChatBubble(input, true);
+            document.getElementById('userInput').value = '';
+
+            let isLunar = input.includes("农历") || input.includes("阴历");
+            let isSolar = input.includes("公历") || input.includes("阳历");
+
+            // 提取数字年份、月份、日期、时间
+            let numbers = input.match(/\d+/g);
+            if (!numbers || numbers.length < 3) {
+                addChatBubble("未能识别到完整的出生年月日，请确保包含年份、月份和日期（如：1990年5月18日 8点）。", false);
+                return;
+            }
+
+            let year = parseInt(numbers[0]);
+            let month = parseInt(numbers[1]);
+            let day = parseInt(numbers[2]);
+            let hour = numbers.length >= 4 ? parseInt(numbers[3]) : 12;
+
+            // 查找时辰关键字
+            let shichenIdx = parseShichenFromText(input, hour);
+
+            if (isLunar && !isSolar) {
+                // 用户输入的是农历
+                calculateAndRender({ isLunar: true, year, month, day, shichenIdx });
+            } else {
+                // 默认按公历（阳历）处理，避免混淆
+                calculateAndRender({ isLunar: false, year, month, day, hour, shichenIdx });
+            }
+        }
+
+        function processFormInput() {
+            let calType = document.getElementById('calendarType').value;
+            let year = parseInt(document.getElementById('selYear').value);
+            let month = parseInt(document.getElementById('selMonth').value);
+            let day = parseInt(document.getElementById('selDay').value);
+            let shichenIdx = parseInt(document.getElementById('selShichen').value);
+
+            let typeName = calType === 'lunar' ? '农历' : '公历';
+            addChatBubble(`排盘需求：${typeName} ${year}年${month}月${d}日 ${getShichenName(shichenIdx)}`, true);
+
+            calculateAndRender({ isLunar: calType === 'lunar', year, month, day, shichenIdx });
+        }
+
+        function parseShichenFromText(text, hour) {
+            const shichenList = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+            for (let i = 0; i < shichenList.length; i++) {
+                if (text.includes(shichenList[i] + "时")) return i;
+            }
+            // 根据小时计算
+            if (hour === 23 || hour === 0) return 0; // 子
+            return Math.floor((hour + 1) / 2) % 12;
+        }
+
+        function getShichenName(idx) {
+            const names = ["子时 (23:00-01:00)", "丑时 (01:00-03:00)", "寅时 (03:00-05:00)", "卯时 (05:00-07:00)",
+                           "辰时 (07:00-09:00)", "巳时 (09:00-11:00)", "午时 (11:00-13:00)", "未时 (13:00-15:00)",
+                           "申时 (15:00-17:00)", "酉时 (17:00-19:00)", "戌时 (19:00-21:00)", "亥时 (21:00-23:00)"];
+            return names[idx];
+        }
+
+        // 核心排盘逻辑（结合权威历法库）
+        function calculateAndRender(params) {
+            let solarDateStr = "";
+            let lunarDateStr = "";
+            let yearGan = "";
+            let yearZhi = "";
+            let lunarMonth = 1;
+            let lunarDay = 1;
+            let shichenIdx = params.shichenIdx;
+
+            if (typeof Lunar !== 'undefined') {
+                try {
+                    let lunarObj;
+                    if (params.isLunar) {
+                        // 农历转公历/阴阳历权威对齐
+                        lunarObj = Lunar.fromYmd(params.year, params.month, params.day);
+                        let solarObj = lunarObj.getSolar();
+                        solarDateStr = `${solarObj.getYear()}年${solarObj.getMonth()}月${solarObj.getDay()}日`;
+                        lunarDateStr = `农历${lunarObj.getYearInGanZhi()}年(${lunarObj.getYearShengXiao()}) ${lunarObj.getMonthInChinese()}月${lunarObj.getDayInChinese()}`;
+                    } else {
+                        // 公历转农历
+                        let solarObj = Solar.fromYmd(params.year, params.month, params.day);
+                        lunarObj = solarObj.getLunar();
+                        solarDateStr = `公历 ${params.year}年${params.month}月${params.day}日`;
+                        lunarDateStr = `农历 ${lunarObj.getYearInGanZhi()}年(${lunarObj.getYearShengXiao()}) ${lunarObj.getMonthInChinese()}月${lunarObj.getDayInChinese()}`;
+                    }
+                    
+                    yearGan = lunarObj.getYearGan();
+                    yearZhi = lunarObj.getYearZhi();
+                    lunarMonth = Math.abs(lunarObj.getMonth());
+                    lunarDay = lunarObj.getDay();
+
+                } catch(err) {
+                    console.error(err);
+                    addChatBubble("日期超出转换范围或解析有误，已切换为基础换算模式。", false);
+                    fallbackConvert();
+                }
+            } else {
+                fallbackConvert();
+            }
+
+            function fallbackConvert() {
+                // 备用转换逻辑
+                solarDateStr = params.isLunar ? "农历直接排盘" : `公历 ${params.year}-${params.month}-${params.day}`;
+                lunarMonth = params.month;
+                lunarDay = params.day;
+                // 天干地支估算
+                let ganArr = ["庚","辛","壬","癸","甲","乙","丙","丁","戊","己"];
+                let zhiArr = ["申","酉","戌","亥","子","丑","寅","卯","辰","巳","午","未"];
+                yearGan = ganArr[params.year % 10];
+                yearZhi = zhiArr[params.year % 12];
+                lunarDateStr = `农历 ${yearGan}${yearZhi}年 ${lunarMonth}月${lunarDay}日`;
+            }
+
+            // 清空盘面
+            DIZHI.forEach(dz => {
+                document.querySelector(`#cell-${dz} .gongwei`).innerText = "";
+                document.querySelector(`#cell-${dz} .stars`).innerHTML = "";
+            });
+
+            // 1. 安命宫与身宫 (寅起正月顺数月，逆数时为命，顺数时为身)
+            let monthPosIndex = (lunarMonth - 1) % 12; // 0:寅
+            let mingGongIndex = (monthPosIndex - shichenIdx) % 12;
+            if (mingGongIndex < 0) mingGongIndex += 12;
+
+            let shenGongIndex = (monthPosIndex + shichenIdx) % 12;
+
+            // 2. 布十二宫
+            for (let i = 0; i < 12; i++) {
+                let currentGongIndex = (mingGongIndex - i) % 12;
+                if (currentGongIndex < 0) currentGongIndex += 12;
+
+                let dizhiName = DIZHI[currentGongIndex];
+                let gongName = GONGWEI_NAMES[i];
+                if (currentGongIndex === shenGongIndex) gongName += " (身宫)";
+
+                document.querySelector(`#cell-${dizhiName} .gongwei`).innerText = gongName;
+            }
+
+            // 3. 推算命宫天干 (五虎遁月)
+            let ganIndexStart = 0;
+            if (["甲", "己"].includes(yearGan)) ganIndexStart = 2; // 丙
+            else if (["乙", "庚"].includes(yearGan)) ganIndexStart = 4; // 戊
+            else if (["丙", "辛"].includes(yearGan)) ganIndexStart = 6; // 庚
+            else if (["丁", "壬"].includes(yearGan)) ganIndexStart = 8; // 壬
+            else if (["戊", "癸"].includes(yearGan)) ganIndexStart = 0; // 甲
+
+            let mingGongGanIndex = (ganIndexStart + mingGongIndex) % 10;
+            let mingGongGan = TIANGAN[mingGongGanIndex];
+            let mingGongZhi = DIZHI[mingGongIndex];
+
+            // 4. 定五行局 (六十甲子纳音)
+            let juNum = getJuNumber(mingGongGan, mingGongZhi);
+
+            // 5. 起紫微星与天府星
+            let ziweiIndex = getZiWeiIndex(lunarDay, juNum);
+            let tianfuIndex = (12 - ziweiIndex) % 12;
+            if (tianfuIndex < 0) tianfuIndex += 12;
+
+            // 6. 布十四主星
+            let starPositions = {};
+
+            const ziweiGroup = [
+                { name: "紫微", offset: 0 },
+                { name: "天机", offset: -1 },
+                { name: "太阳", offset: -3 },
+                { name: "武曲", offset: -4 },
+                { name: "天同", offset: -5 },
+                { name: "廉贞", offset: -8 }
+            ];
+
+            ziweiGroup.forEach(star => {
+                let idx = (ziweiIndex + star.offset) % 12;
+                if (idx < 0) idx += 12;
+                if (!starPositions[idx]) starPositions[idx] = [];
+                starPositions[idx].push({ name: star.name, group: "purple-group" });
+            });
+
+            const tianfuGroup = [
+                { name: "天府", offset: 0 },
+                { name: "太阴", offset: 1 },
+                { name: "贪狼", offset: 2 },
+                { name: "巨门", offset: 3 },
+                { name: "天相", offset: 4 },
+                { name: "天梁", offset: 5 },
+                { name: "七杀", offset: 6 },
+                { name: "破军", offset: 10 }
+            ];
+
+            tianfuGroup.forEach(star => {
+                let idx = (tianfuIndex + star.offset) % 12;
+                if (idx < 0) idx += 12;
+                if (!starPositions[idx]) starPositions[idx] = [];
+                starPositions[idx].push({ name: star.name, group: "tianfu-group" });
+            });
+
+            // 渲染星曜到界面
+            for (let idx in starPositions) {
+                let dz = DIZHI[idx];
+                let cellStarsDiv = document.querySelector(`#cell-${dz} .stars`);
+                starPositions[idx].forEach(s => {
+                    let span = document.createElement("div");
+                    span.className = `star-item ${s.group}`;
+                    span.innerText = s.name;
+                    cellStarsDiv.appendChild(span);
+                });
+            }
+
+            // 更新中堂信息
+            document.getElementById('center-info').innerHTML = `
+                <strong>对应阳历：</strong>${solarDateStr}<br>
+                <strong>农历乾坤：</strong>${lunarDateStr}<br>
+                <strong>生辰时辰：</strong>${getShichenName(shichenIdx)}<br>
+                <hr style="margin: 6px 0; border: none; border-top: 1px dashed #ccc;">
+                <strong>命宫干支：</strong>${mingGongGan}${mingGongZhi}宫<br>
+                <strong>五行局：</strong><span class="highlight">${JU_NAMES[juNum]}</span><br>
+                <strong>紫微星：</strong>${DIZHI[ziweiIndex]}宫 | <strong>天府星：</strong>${DIZHI[tianfuIndex]}宫
+            `;
+
+            addChatBubble(`排盘成功！<br>• ${solarDateStr}<br>• ${lunarDateStr}<br>• 局象：<b>${JU_NAMES[juNum]}</b> (命宫在${mingGongZhi})`, false);
+        }
+
+        // 六十甲子纳音定局数
+        function getJuNumber(gan, zhi) {
+            const ganMap = { "甲":1, "乙":1, "丙":2, "丁":2, "戊":3, "己":3, "庚":4, "辛":4, "壬":5, "癸":5 };
+            const zhiMap = { 
+                "子":1, "丑":1, "午":1, "未":1, 
+                "寅":2, "卯":2, "申":2, "酉":2, 
+                "辰":3, "巳":3, "戌":3, "亥":3 
+            };
+            let sum = ganMap[gan] + zhiMap[zhi];
+            if (sum > 5) sum -= 5;
+            const wuxingJuMap = { 1: 3, 2: 4, 3: 2, 4: 6, 5: 5 };
+            return wuxingJuMap[sum];
+        }
+
+        // 定紫微星算法
+        function getZiWeiIndex(day, ju) {
+            let rem = day % ju;
+            let quotient = Math.floor(day / ju);
+            if (rem === 0) {
+                let pos = (quotient - 1) % 12;
+                return pos;
+            } else {
+                let add = ju - rem;
+                let newNum = day + add;
+                let q = Math.floor(newNum / ju);
+                let pos;
+                if (add % 2 === 1) {
+                    pos = (q - 1 + add) % 12;
+                } else {
+                    pos = (q - 1 - add) % 12;
+                }
+                if (pos < 0) pos += 12;
+                return pos;
+            }
+        }
+    </script>
+</body>
+</html>
