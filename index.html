@@ -3,124 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>专业紫微斗数排盘系统</title>
+    <title>专业级紫微斗数天纪排盘系统</title>
+    <!-- 引入权威开源农历库组件 -->
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f5f7; color: #333; padding: 15px; }
-        .container { max-width: 1050px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 15px; color: #8b0000; font-size: 22px; }
-        
-        /* 输入表单面板 */
-        .input-card { background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: center; }
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #eef0f3; color: #222; padding: 15px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 12px; color: #8b0000; font-size: 24px; letter-spacing: 1px; }
+
+        /* 输入控制面板 */
+        .control-panel { background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; }
         .form-group { display: flex; align-items: center; gap: 6px; font-size: 14px; }
         label { font-weight: bold; color: #444; }
-        input, select, button { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; }
-        input[type="number"] { width: 70px; }
-        button { background: #8b0000; color: #fff; border: none; padding: 7px 18px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        input, select, button { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        button { background: #8b0000; color: #fff; border: none; padding: 7px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; }
         button:hover { background: #a00000; }
 
-        /* 十二宫网格布局 */
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 150px); gap: 3px; background: #8b0000; border: 3px solid #8b0000; border-radius: 8px; overflow: hidden; }
-        .cell { background: #fffcf8; padding: 6px; position: relative; display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; }
+        /* 专业十二宫网格布局 */
+        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 175px); gap: 3px; background: #8b0000; border: 3px solid #8b0000; border-radius: 6px; overflow: hidden; }
         
-        /* 中宫 */
-        .center-box { grid-column: 2 / 4; grid-row: 2 / 4; background: #fff; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px solid #e2d5c5; }
-        .center-box h2 { color: #8b0000; font-size: 18px; margin-bottom: 8px; }
-        .info-grid { text-align: left; font-size: 13px; line-height: 1.8; color: #444; }
+        /* 单个宫位专业排版 */
+        .cell { background: #fffefb; padding: 6px; position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; border: 1px solid #e0d8cd; }
+        
+        /* 宫位头部：星曜展示区 */
+        .stars-area { display: flex; justify-content: space-between; width: 100%; height: 110px; }
+        
+        /* 主星区（左侧/中间列） */
+        .main-stars { display: flex; gap: 4px; }
+        .star-box { display: flex; flex-direction: column; align-items: center; }
+        .star-main { color: #b22222; font-weight: bold; font-size: 15px; writing-mode: vertical-rl; letter-spacing: 2px; }
+        .star-wang { font-size: 10px; color: #888; margin-top: 2px; }
+        
+        /* 辅吉星与煞星区（右侧列） */
+        .sub-stars { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 4px; width: 55px; justify-content: flex-end; }
+        .star-lucky { color: #2e7d32; font-weight: bold; font-size: 12px; }
+        .star-bad { color: #7b1fa2; font-weight: bold; font-size: 12px; }
+        .star-other { color: #555; font-size: 11px; }
 
-        /* 星曜分类样式 */
-        .stars-container { display: flex; flex-wrap: wrap; gap: 3px 6px; align-content: flex-start; }
-        .star-main { color: #d90000; font-weight: bold; font-size: 13px; } /* 主星 */
-        .star-lucky { color: #2e7d32; font-weight: bold; } /* 吉星 */
-        .star-bad { color: #8e24aa; font-weight: bold; } /* 煞星 */
-        
-        /* 四化印章样式 */
-        .mutagen { font-size: 10px; padding: 1px 3px; border-radius: 3px; color: #fff; margin-left: 2px; font-weight: normal; }
+        /* 四化印章 */
+        .mutagen { font-size: 10px; padding: 1px 2px; border-radius: 2px; color: #fff; line-height: 1; margin-top: 2px; font-weight: normal; }
         .si-lu { background: #2e7d32; }
         .si-quan { background: #c62828; }
         .si-ke { background: #1565c0; }
         .si-ji { background: #37474f; }
 
-        /* 宫位底部信息 */
-        .cell-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #f0e0d0; padding-top: 3px; }
-        .gong-name { font-weight: bold; font-size: 13px; color: #8b0000; }
-        .dizhi { color: #666; font-weight: bold; }
+        /* 宫位底部信息区 */
+        .cell-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed #e0d0c0; padding-top: 3px; font-size: 12px; }
+        .gong-ganzhi { font-weight: bold; color: #333; }
+        .gong-name { font-weight: bold; font-size: 14px; color: #8b0000; }
+        .daxian-text { color: #777; font-size: 11px; }
+
+        /* 中宫中枢面板 */
+        .center-box { grid-column: 2 / 4; grid-row: 2 / 4; background: #faf6f0; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid #d4c5b3; }
+        .center-box h2 { color: #8b0000; font-size: 20px; margin-bottom: 8px; border-bottom: 2px solid #8b0000; pb: 4px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 15px; font-size: 13px; text-align: left; line-height: 1.6; }
+        .info-full { grid-column: span 2; }
+        .highlight { color: #b22222; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>紫微斗数全功能排盘系统</h1>
+    <h1>紫微斗数专业级天纪排盘系统</h1>
     
-    <!-- 输入面板 -->
-    <div class="input-card">
+    <!-- 表单控制面板 -->
+    <div class="control-panel">
         <div class="form-row">
             <div class="form-group">
-                <label>公历出生年:</label>
-                <input type="number" id="birthYear" value="1991" min="1900" max="2050"> 年
-            </div>
-            <div class="form-group">
-                <label>农历月份:</label>
-                <select id="birthMonth">
-                    <option value="1">正月(一月)</option>
-                    <option value="2">二月</option>
-                    <option value="3">三月</option>
-                    <option value="4" selected>四月</option>
-                    <option value="5">五月</option>
-                    <option value="6">六月</option>
-                    <option value="7">七月</option>
-                    <option value="8">八月</option>
-                    <option value="9">九月</option>
-                    <option value="10">十月</option>
-                    <option value="11">十一月</option>
-                    <option value="12">十二月</option>
+                <label>历法分类:</label>
+                <select id="calType">
+                    <option value="solar">公历 (阳历)</option>
+                    <option value="lunar">农历 (阴历)</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>农历日期:</label>
-                <input type="number" id="birthDay" value="19" min="1" max="30"> 日
+                <label>出生年:</label>
+                <input type="number" id="birthYear" value="1991" min="1900" max="2050"> 年
+            </div>
+            <div class="form-group">
+                <label>月份:</label>
+                <input type="number" id="birthMonth" value="6" min="1" max="12"> 月
+            </div>
+            <div class="form-group">
+                <label>日期:</label>
+                <input type="number" id="birthDay" value="1" min="1" max="31"> 日
             </div>
             <div class="form-group">
                 <label>出生时辰:</label>
                 <select id="birthHour">
-                    <option value="0">子时 (23:00-01:00)</option>
-                    <option value="1">丑时 (01:00-03:00)</option>
-                    <option value="2">寅时 (03:00-05:00)</option>
-                    <option value="3">卯时 (05:00-07:00)</option>
-                    <option value="4">辰时 (07:00-09:00)</option>
-                    <option value="5">巳时 (09:00-11:00)</option>
-                    <option value="6" selected>午时 (11:00-13:00)</option>
-                    <option value="7">未时 (13:00-15:00)</option>
-                    <option value="8">申时 (15:00-17:00)</option>
-                    <option value="9">酉时 (17:00-19:00)</option>
-                    <option value="10">戌时 (19:00-21:00)</option>
-                    <option value="11">亥时 (21:00-23:00)</option>
+                    <option value="0">子时 (23:00-00:59)</option>
+                    <option value="1">丑时 (01:00-02:59)</option>
+                    <option value="2">寅时 (03:00-04:59)</option>
+                    <option value="3">卯时 (05:00-06:59)</option>
+                    <option value="4">辰时 (07:00-08:59)</option>
+                    <option value="5">巳时 (09:00-10:59)</option>
+                    <option value="6" selected>午时 (11:00-12:59)</option>
+                    <option value="7">未时 (13:00-14:59)</option>
+                    <option value="8">申时 (15:00-16:59)</option>
+                    <option value="9">酉时 (17:00-18:59)</option>
+                    <option value="10">戌时 (19:00-20:59)</option>
+                    <option value="11">亥时 (21:00-22:59)</option>
                 </select>
             </div>
-            <button onclick="calculateAndRender()">开始排盘</button>
+            <div class="form-group">
+                <label>性别:</label>
+                <select id="gender">
+                    <option value="男">男 (乾造)</option>
+                    <option value="女">女 (坤造)</option>
+                </select>
+            </div>
+            <button onclick="calculateAndRender()">起 盘</button>
         </div>
     </div>
 
-    <!-- 排盘方盘 -->
+    <!-- 盘面网格 -->
     <div class="board" id="board"></div>
 </div>
 
 <script>
-// 天干地支常量
-const tiangan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-const dizhi = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
-const gongNames = ["命宫", "兄弟宫", "夫妻宫", "子女宫", "财帛宫", "疾厄宫", "迁移宫", "仆役宫", "官禄宫", "田宅宫", "福德宫", "父母宫"];
+// 常量定义：地支基准数 (0:寅, 1:卯, 2:辰 ... 11:丑)
+const DIZHI = ["寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"];
+const TIANGAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+const GONG_NAMES = ["命宫", "兄弟宫", "夫妻宫", "子女宫", "财帛宫", "疾厄宫", "迁移宫", "仆役宫", "官禄宫", "田宅宫", "福德宫", "父母宫"];
 
-// 宫位网格映射 (巳开始顺时针排列)
-const gridLayout = [
-    {row:1, col:1, name:"巳", idx:5}, {row:1, col:2, name:"午", idx:6}, {row:1, col:3, name:"未", idx:7}, {row:1, col:4, name:"申", idx:8},
-    {row:2, col:4, name:"酉", idx:9}, {row:3, col:4, name:"戌", idx:10}, {row:4, col:4, name:"亥", idx:11}, {row:4, col:3, name:"子", idx:0},
-    {row:4, col:2, name:"丑", idx:1}, {row:4, col:1, name:"寅", idx:2}, {row:3, col:1, name:"卯", idx:3}, {row:2, col:1, name:"辰", idx:4}
-];
-
-// 四化表
-const sihuaRules = {
+// 四化星定义
+const SIHUA_MAP = {
     "甲": { "廉贞": "禄", "破军": "权", "武曲": "科", "太阳": "忌" },
     "乙": { "天机": "禄", "天梁": "权", "紫微": "科", "太阴": "忌" },
     "丙": { "天同": "禄", "天机": "权", "文昌": "科", "廉贞": "忌" },
@@ -133,102 +142,209 @@ const sihuaRules = {
     "癸": { "破军": "禄", "巨门": "权", "太阴": "科", "贪狼": "忌" }
 };
 
+// 四方格布局位置映射 (巳在左上角)
+const GRID_LAYOUT = [
+    { row: 1, col: 1, dz: "巳" }, { row: 1, col: 2, dz: "午" }, { row: 1, col: 3, dz: "未" }, { row: 1, col: 4, dz: "申" },
+    { row: 2, col: 4, dz: "酉" }, { row: 3, col: 4, dz: "戌" }, { row: 4, col: 4, dz: "亥" }, { row: 4, col: 3, dz: "子" },
+    { row: 4, col: 2, dz: "丑" }, { row: 4, col: 1, dz: "寅" }, { row: 3, col: 1, dz: "卯" }, { row: 2, col: 1, dz: "辰" }
+];
+
 function calculateAndRender() {
+    const isSolar = document.getElementById("calType").value === "solar";
     const year = parseInt(document.getElementById("birthYear").value);
     const month = parseInt(document.getElementById("birthMonth").value);
-    const hour = parseInt(document.getElementById("birthHour").value);
+    const day = parseInt(document.getElementById("birthDay").value);
+    const shichenIdx = parseInt(document.getElementById("birthHour").value);
+    const gender = document.getElementById("gender").value;
 
-    // 计算年干支
-    const yearGanIdx = (year - 4) % 10;
-    const yearZhiIdx = (year - 4) % 12;
-    const yearGan = tiangan[yearGanIdx < 0 ? yearGanIdx + 10 : yearGanIdx];
-    const yearZhi = dizhi[yearZhiIdx < 0 ? yearZhiIdx + 12 : yearZhiIdx];
+    let lunar, solarStr, lunarStr, yearGan, yearZhi, lMonth, lDay;
 
-    // 计算命宫与身宫位置
-    // 命宫：寅起正月，顺数至生月，再逆数至生时
-    let mingIdx = (2 + (month - 1) - hour) % 12;
-    if (mingIdx < 0) mingIdx += 12;
-    
-    // 身宫：寅起正月，顺数至生月，再顺数至生时
-    let shenIdx = (2 + (month - 1) + hour) % 12;
-
-    // 建立 12 宫数据结构
-    let cellsData = {};
-    for (let i = 0; i < 12; i++) {
-        cellsData[i] = { main: [], lucky: [], bad: [], gongName: "" };
+    if (typeof Lunar !== 'undefined') {
+        if (isSolar) {
+            let solar = Solar.fromYmd(year, month, day);
+            lunar = solar.getLunar();
+            solarStr = `${year}年${month}月${day}日`;
+        } else {
+            lunar = Lunar.fromYmd(year, month, day);
+            let solar = lunar.getSolar();
+            solarStr = `${solar.getYear()}年${solar.getMonth()}月${solar.getDay()}日`;
+        }
+        lunarStr = `农历 ${lunar.getYearInGanZhi()}年(${lunar.getYearShengXiao()}) ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
+        yearGan = lunar.getYearGan();
+        yearZhi = lunar.getYearZhi();
+        lMonth = Math.abs(lunar.getMonth());
+        lDay = lunar.getDay();
+    } else {
+        alert("历法库加载失败，请检查网络后再试！");
+        return;
     }
 
-    // 分配十二宫名称
+    // 1. 安命宫与身宫 (0:寅宫起始)
+    let monthIdx = (lMonth - 1) % 12; 
+    let mingIndex = (monthIdx - shichenIdx) % 12;
+    if (mingIndex < 0) mingIndex += 12;
+
+    let shenIndex = (monthIdx + shichenIdx) % 12;
+
+    // 2. 推算宫干 (五虎遁月法)
+    let ganStart = 0;
+    if (["甲", "己"].includes(yearGan)) ganStart = 2; // 丙寅
+    else if (["乙", "庚"].includes(yearGan)) ganStart = 4; // 戊寅
+    else if (["丙", "辛"].includes(yearGan)) ganStart = 6; // 庚寅
+    else if (["丁", "壬"].includes(yearGan)) ganStart = 8; // 壬寅
+    else if (["戊", "癸"].includes(yearGan)) ganStart = 0; // 甲寅
+
+    let gongGans = {};
     for (let i = 0; i < 12; i++) {
-        let pos = (mingIdx - i) % 12;
-        if (pos < 0) pos += 12;
-        let name = gongNames[i];
-        if (pos === shenIdx) name += "(身宫)";
-        cellsData[pos].gongName = name;
+        gongGans[DIZHI[i]] = TIANGAN[(ganStart + i) % 10];
     }
 
-    // 经典安星逻辑简易安插（示例演示十四主星与煞星安宫）
-    // 示例：将紫微、太阳、太阴、羊陀等分配至相应宫位
-    cellsData[(mingIdx + 6) % 12].main.push("太阳", "天梁");
-    cellsData[mingIdx].main.push("太阴");
-    cellsData[(mingIdx + 2) % 12].main.push("天机");
-    cellsData[(mingIdx + 3) % 12].main.push("紫微");
-    cellsData[(mingIdx + 4) % 12].main.push("巨门");
-    cellsData[(mingIdx + 8) % 12].main.push("破军");
-    
-    // 安六吉六煞
-    cellsData[(mingIdx + 1) % 12].bad.push("擎羊");
-    cellsData[(mingIdx + 11) % 12].bad.push("陀罗");
-    cellsData[(mingIdx + 5) % 12].bad.push("火星");
-    cellsData[(mingIdx + 7) % 12].lucky.push("左辅", "文昌");
+    // 3. 纳音五行局
+    let mingGan = gongGans[DIZHI[mingIndex]];
+    let mingZhi = DIZHI[mingIndex];
+    let juNum = getJuNumber(mingGan, mingZhi);
+    const juNames = { 2: "水二局", 3: "木三局", 4: "金四局", 5: "土五局", 6: "火六局" };
 
-    // 渲染页面
+    // 4. 定紫微星与天府星位置
+    let ziweiIndex = getZiWeiIndex(lDay, juNum);
+    let tianfuIndex = (12 - ziweiIndex) % 12;
+    if (tianfuIndex < 0) tianfuIndex += 12;
+
+    // 初始化十二宫数据
+    let boardData = {};
+    DIZHI.forEach(dz => {
+        boardData[dz] = { main: [], lucky: [], bad: [], other: [], gongName: "", daxian: "", gan: gongGans[dz] };
+    });
+
+    // 5. 布十二宫名与大限年龄
+    // 阴阳属性：甲丙戊庚壬为阳，乙丁己辛癸为阴
+    let isYang = ["甲", "丙", "戊", "庚", "壬"].includes(yearGan);
+    let isShun = (gender === "男" && isYang) || (gender === "女" && !isYang); // 阳男阴女顺行，阴男阳女逆行
+
+    for (let i = 0; i < 12; i++) {
+        let gongPos = (mingIndex - i) % 12;
+        if (gongPos < 0) gongPos += 12;
+        let dz = DIZHI[gongPos];
+        let name = GONG_NAMES[i];
+        if (gongPos === shenIndex) name += "(身)";
+        boardData[dz].gongName = name;
+
+        // 计算大限
+        let startAge = juNum + (isShun ? i * 10 : (12 - i) % 12 * 10);
+        if (!isShun && i === 0) startAge = juNum;
+        boardData[dz].daxian = `${startAge}-${startAge + 9}`;
+    }
+
+    // 6. 布十四主星
+    const ziweiStars = [
+        { name: "紫微", offset: 0 }, { name: "天机", offset: -1 }, 
+        { name: "太阳", offset: -3 }, { name: "武曲", offset: -4 }, 
+        { name: "天同", offset: -5 }, { name: "廉贞", offset: -8 }
+    ];
+    ziweiStars.forEach(s => {
+        let idx = (ziweiIndex + s.offset) % 12;
+        if (idx < 0) idx += 12;
+        boardData[DIZHI[idx]].main.push(s.name);
+    });
+
+    const tianfuStars = [
+        { name: "天府", offset: 0 }, { name: "太阴", offset: 1 }, 
+        { name: "贪狼", offset: 2 }, { name: "巨门", offset: 3 }, 
+        { name: "天相", offset: 4 }, { name: "天梁", offset: 5 }, 
+        { name: "七杀", offset: 6 }, { name: "破军", offset: 10 }
+    ];
+    tianfuStars.forEach(s => {
+        let idx = (tianfuIndex + s.offset) % 12;
+        if (idx < 0) idx += 12;
+        boardData[DIZHI[idx]].main.push(s.name);
+    });
+
+    // 7. 布八吉星与八煞星（严格安星法）
+    // 文昌文曲 (辰起子时)
+    let wenchangIdx = (4 - shichenIdx) % 12; if (wenchangIdx < 0) wenchangIdx += 12; // 戌起子时逆数
+    let wenquIdx = (10 + shichenIdx) % 12; // 辰起子时顺数
+    boardData[DIZHI[wenchangIdx]].lucky.push("文昌");
+    boardData[DIZHI[wenquIdx]].lucky.push("文曲");
+
+    // 左辅右弼 (辰起正月顺/亥起正月逆)
+    let zuofuIdx = (4 + (lMonth - 1)) % 12;
+    let youbiIdx = (9 - (lMonth - 1)) % 12; if (youbiIdx < 0) youbiIdx += 12;
+    boardData[DIZHI[zuofuIdx]].lucky.push("左辅");
+    boardData[DIZHI[youbiIdx]].lucky.push("右弼");
+
+    // 禄存、擎羊、陀罗 (依据年干)
+    const lucunMap = { "甲": 0, "乙": 1, "丙": 3, "丁": 4, "戊": 3, "己": 4, "庚": 6, "辛": 7, "壬": 9, "癸": 10 }; // 0即寅
+    let lucunIdx = lucunMap[yearGan];
+    boardData[DIZHI[lucunIdx]].lucky.push("禄存");
+    
+    let qingyangIdx = (lucunIdx + 1) % 12;
+    let tuoluoIdx = (lucunIdx - 1) % 12; if (tuoluoIdx < 0) tuoluoIdx += 12;
+    boardData[DIZHI[qingyangIdx]].bad.push("擎羊");
+    boardData[DIZHI[tuoluoIdx]].bad.push("陀罗");
+
+    // 火星铃星 (依据年支与生时)
+    let huoxingStart = { "子":1, "丑":2, "寅":1, "卯":2, "辰":1, "巳":2, "午":1, "未":2, "申":1, "酉":2, "戌":1, "亥":2 }[yearZhi] || 1;
+    let huoxingIdx = (huoxingStart + shichenIdx) % 12;
+    boardData[DIZHI[huoxingIdx]].bad.push("火星");
+
+    // 地空地劫 (亥宫起子时)
+    let dikongIdx = (9 - shichenIdx) % 12; if (dikongIdx < 0) dikongIdx += 12;
+    let dijieIdx = (9 + shichenIdx) % 12;
+    boardData[DIZHI[dikongIdx]].bad.push("地空");
+    boardData[DIZHI[dijieIdx]].bad.push("地劫");
+
+    // 8. 渲染盘面
     const board = document.getElementById("board");
-    const currentSihua = sihuaRules[yearGan];
+    const currentSihua = SIHUA_MAP[yearGan];
     board.innerHTML = "";
 
-    gridLayout.forEach(grid => {
-        const cellInfo = cellsData[grid.idx];
-        const cell = document.createElement("div");
+    GRID_LAYOUT.forEach(grid => {
+        let dz = grid.dz;
+        let data = boardData[dz];
+
+        let cell = document.createElement("div");
         cell.className = "cell";
         cell.style.gridRow = grid.row;
         cell.style.gridColumn = grid.col;
 
-        let starsHTML = `<div class="stars-container">`;
-        
-        // 主星渲染与四化
-        cellInfo.main.forEach(star => {
+        let starsHTML = `<div class="stars-area"><div class="main-stars">`;
+
+        // 主星渲染
+        data.main.forEach(star => {
             let mutHTML = "";
             if (currentSihua[star]) {
-                const type = currentSihua[star];
-                const typeClass = type === '禄' ? 'si-lu' : type === '权' ? 'si-quan' : type === '科' ? 'si-ke' : 'si-ji';
-                mutHTML = `<span class="mutagen ${typeClass}">化${type}</span>`;
+                let t = currentSihua[star];
+                let c = t === '禄' ? 'si-lu' : t === '权' ? 'si-quan' : t === '科' ? 'si-ke' : 'si-ji';
+                mutHTML = `<span class="mutagen ${c}">化${t}</span>`;
             }
-            starsHTML += `<span class="star-main">${star}${mutHTML}</span>`;
+            starsHTML += `<div class="star-box"><span class="star-main">${star}</span>${mutHTML}</div>`;
         });
+        starsHTML += `</div><div class="sub-stars">`;
 
         // 吉星
-        cellInfo.lucky.forEach(star => {
+        data.lucky.forEach(star => {
             let mutHTML = "";
             if (currentSihua[star]) {
-                const type = currentSihua[star];
-                const typeClass = type === '禄' ? 'si-lu' : type === '权' ? 'si-quan' : type === '科' ? 'si-ke' : 'si-ji';
-                mutHTML = `<span class="mutagen ${typeClass}">化${type}</span>`;
+                let t = currentSihua[star];
+                let c = t === '禄' ? 'si-lu' : t === '权' ? 'si-quan' : t === '科' ? 'si-ke' : 'si-ji';
+                mutHTML = `<span class="mutagen ${c}">${t}</span>`;
             }
             starsHTML += `<span class="star-lucky">${star}${mutHTML}</span>`;
         });
 
         // 煞星
-        cellInfo.bad.forEach(star => {
+        data.bad.forEach(star => {
             starsHTML += `<span class="star-bad">${star}</span>`;
         });
 
-        starsHTML += `</div>`;
+        starsHTML += `</div></div>`;
 
-        const footerHTML = `
+        // 页脚
+        let footerHTML = `
             <div class="cell-footer">
-                <span class="gong-name">${cellInfo.gongName}</span>
-                <span class="dizhi">${grid.name}</span>
+                <span class="daxian-text">${data.daxian}</span>
+                <span class="gong-name">${data.gongName}</span>
+                <span class="gong-ganzhi">${data.gan}${dz}</span>
             </div>
         `;
 
@@ -236,34 +352,54 @@ function calculateAndRender() {
         board.appendChild(cell);
     });
 
-    // 中宫信息
-    const center = document.createElement("div");
+    // 渲染中宫中枢
+    let center = document.createElement("div");
     center.className = "center-box";
     center.innerHTML = `
-        <h2>紫微斗数排盘中枢</h2>
+        <h2>天纪·紫微斗数中枢</h2>
         <div class="info-grid">
-            <p><strong>生辰干支：</strong>${yearGan}${yearZhi}年</p>
-            <p><strong>命宫方位：</strong>${dizhi[mingIdx]}宫</p>
-            <p><strong>生年四化：</strong></p>
-            <p>• 化禄：${getStarBySihua(currentSihua, '禄')}</p>
-            <p>• 化权：${getStarBySihua(currentSihua, '权')}</p>
-            <p>• 化科：${getStarBySihua(currentSihua, '科')}</p>
-            <p>• <span style="color:#c62828;font-weight:bold;">化忌：${getStarBySihua(currentSihua, '忌')}</span></p>
+            <p><strong>阳历：</strong>${solarStr}</p>
+            <p><strong>阴历：</strong>${lunarStr}</p>
+            <p><strong>局象：</strong><span class="highlight">${juNames[juNum]}</span></p>
+            <p><strong>命宫：</strong>${mingGan}${mingZhi}宫</p>
+            <p class="info-full"><strong>生年四化：</strong>
+                ${getStarSihuaText(currentSihua)}
+            </p>
         </div>
     `;
     board.appendChild(center);
 }
 
-function getStarBySihua(sihuaObj, type) {
-    for (let key in sihuaObj) {
-        if (sihuaObj[key] === type) return `${key}星`;
-    }
-    return "无";
+function getJuNumber(gan, zhi) {
+    const ganMap = { "甲":1, "乙":1, "丙":2, "丁":2, "戊":3, "己":3, "庚":4, "辛":4, "壬":5, "癸":5 };
+    const zhiMap = { "子":1, "丑":1, "午":1, "未":1, "寅":2, "卯":2, "申":2, "酉":2, "辰":3, "巳":3, "戌":3, "亥":3 };
+    let sum = ganMap[gan] + zhiMap[zhi];
+    if (sum > 5) sum -= 5;
+    return { 1: 3, 2: 4, 3: 2, 4: 6, 5: 5 }[sum];
 }
 
-// 页面加载后自动运行一次
-calculateAndRender();
-</script>
+function getZiWeiIndex(day, ju) {
+    let rem = day % ju;
+    let quotient = Math.floor(day / ju);
+    if (rem === 0) return (quotient - 1) % 12;
+    let add = ju - rem;
+    let q = Math.floor((day + add) / ju);
+    let pos = (add % 2 === 1) ? (q - 1 + add) % 12 : (q - 1 - add) % 12;
+    return pos < 0 ? pos + 12 : pos;
+}
 
+function getStarSihuaText(sihuaObj) {
+    let res = [];
+    for (let k in sihuaObj) {
+        res.push(`${k}<b>化${sihuaObj[k]}</b>`);
+    }
+    return res.join(" | ");
+}
+
+// 页面加载完毕后自动运行
+window.onload = function() {
+    calculateAndRender();
+};
+</script>
 </body>
 </html>
